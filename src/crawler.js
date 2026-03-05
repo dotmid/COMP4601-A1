@@ -20,11 +20,8 @@ export async function crawlDataset({ dataset, seedUrl, maxPages = 1500 }) {
   function isAllowed(url) {
     try {
       const u = new URL(url);
-      // Must be same host
-      if (u.host !== seedParsed.host) return false;
-      // If seed has a path prefix (e.g. /docs/), restrict to it
-      if (pathPrefix && !u.pathname.startsWith(pathPrefix)) return false;
-      return true;
+      // This ignores path folders and just makes sure you stay on the site
+      return u.host === seedParsed.host; 
     } catch {
       return false;
     }
