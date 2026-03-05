@@ -21,7 +21,7 @@ app.use(express.static(__dirname));
 //Datasets
 const datasets = {
   "fruitsA":  "https://people.scs.carleton.ca/~avamckenney/fruitsA/N-0.html",
-  "personal": "https://www.pygame.org/docs/"
+  "personal": "https://books.toscrape.com/"
 };
 
 // Helpers funcs
