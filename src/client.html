@@ -1,0 +1,725 @@
+*****Edited html from another class, but its probably too much for A1, just need to test ****
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A1 Search Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0b0c0e;
+      --surface:  #111318;
+      --border:   #1e2028;
+      --amber:    #f0a500;
+      --amber-lo: rgba(240,165,0,0.10);
+      --amber-mid:rgba(240,165,0,0.25);
+      --text:     #e8e4dc;
+      --muted:    #6b6d75;
+      --green:    #4ade80;
+      --red:      #f87171;
+      --mono:     'JetBrains Mono', monospace;
+      --serif:    'Playfair Display', Georgia, serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /*Noise texture overlay*/
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /*Layout*/
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 52px 0 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .logo-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo {
+      font-family: var(--serif);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--amber);
+      letter-spacing: -0.5px;
+    }
+    .logo-tag {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .tagline {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Search card ── */
+    .search-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus {
+      border-color: var(--amber);
+    }
+    .search-input::placeholder { color: var(--muted); }
+
+    .btn {
+      background: var(--amber);
+      color: #0b0c0e;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .controls-row {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Dataset selection */
+    select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    select:focus { border-color: var(--amber); }
+
+    /* Limit input */
+    input[type="number"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      width: 64px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="number"]:focus { border-color: var(--amber); }
+
+    /* Toggle switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle {
+      position: relative;
+      width: 34px;
+      height: 18px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 18px;
+      transition: background 0.2s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      left: 3px; top: 3px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle input:checked + .slider { background: var(--amber-mid); }
+    .toggle input:checked + .slider::before {
+      transform: translateX(16px);
+      background: var(--amber);
+    }
+
+    /* Status bar */
+    .status {
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      min-height: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status.loading::before {
+      content: '';
+      display: inline-block;
+      width: 10px; height: 10px;
+      border: 2px solid var(--border);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .dot { color: var(--amber); }
+
+    /* Results */
+    #results {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px 16px;
+      align-items: start;
+      animation: fadeUp 0.25s ease both;
+      transition: border-color 0.15s;
+    }
+    .result-card:hover { border-color: #2d3040; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-rank {
+      grid-column: 1 / -1;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .result-title {
+      font-family: var(--serif);
+      font-size: 17px;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .result-url {
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+      margin-top: 2px;
+    }
+    .result-url a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .result-url a:hover { color: var(--amber); }
+
+    .result-meta {
+      display: flex;
+      gap: 14px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+    }
+    .meta-chip .chip-label { color: var(--muted); }
+    .meta-chip .chip-val   { color: var(--text); }
+    .meta-chip .chip-val.amber { color: var(--amber); }
+    .meta-chip .chip-val.green { color: var(--green); }
+
+    .detail-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+      align-self: start;
+      margin-top: 2px;
+    }
+    .detail-btn:hover { border-color: var(--amber); color: var(--amber); }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 760px;
+      padding: 28px 30px;
+      position: relative;
+      animation: fadeUp 0.2s ease;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 18px;
+      background: none; border: none;
+      color: var(--muted); font-size: 18px;
+      cursor: pointer; line-height: 1;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-title {
+      font-family: var(--serif);
+      font-size: 22px;
+      color: var(--text);
+      margin-bottom: 4px;
+      padding-right: 32px;
+    }
+    .modal-url {
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+      margin-bottom: 20px;
+    }
+    .modal-url a { color: var(--amber); text-decoration: none; }
+
+    .modal-section {
+      margin-bottom: 22px;
+    }
+    .modal-section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--amber);
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .link-list a {
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.1s;
+    }
+    .link-list a:hover { color: var(--text); }
+
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 6px;
+    }
+    .word-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 5px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .word-chip .w { color: var(--text); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .word-chip .c { color: var(--amber); font-size: 11px; flex-shrink: 0; }
+
+    .modal-stats {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 14px;
+    }
+    .stat-box .sb-val {
+      font-size: 18px;
+      color: var(--amber);
+      font-weight: 500;
+    }
+    .stat-box .sb-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .empty-state {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Error ── */
+    .error-msg {
+      background: rgba(248,113,113,0.07);
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--red);
+    }
+
+    /* ── Scrollbar styling ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a2d38; }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="logo-line">
+      <span class="logo">Searchlight</span>
+      <span class="logo-tag">v2.0</span>
+    </div>
+    <p class="tagline">TF-IDF · PageRank Boosting · Crawled Web Index</p>
+  </header>
+
+  <div class="search-card">
+    <!-- Query row -->
+    <div class="search-row">
+      <input
+        id="queryInput"
+        class="search-input"
+        type="text"
+        placeholder="Enter search query…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="btn" id="searchBtn" onclick="runSearch()">Search</button>
+    </div>
+
+    <!-- Controls row -->
+    <div class="controls-row">
+
+      <div class="control-group">
+        <span class="control-label">Dataset</span>
+        <select id="datasetSelect">
+          <option value="fruitsA">fruitsA — Carleton Fruits</option>
+          <option value="personal">personal — Pygame Docs</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Limit</span>
+        <input type="number" id="limitInput" value="10" min="1" max="50" />
+      </div>
+
+      <label class="toggle-wrap control-group">
+        <span class="control-label">PageRank Boost</span>
+        <div class="toggle">
+          <input type="checkbox" id="boostToggle" />
+          <span class="slider"></span>
+        </div>
+      </label>
+
+    </div>
+  </div>
+
+  <div class="status" id="statusBar"></div>
+
+  <div id="results"></div>
+</div>
+
+<!-- Page Detail Modal -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+  <div class="modal" id="modalContent">
+    <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    <div id="modalBody">Loading…</div>
+  </div>
+</div>
+
+<script>
+  let currentDataset = "fruitsA";
+
+  document.getElementById("datasetSelect").addEventListener("change", e => {
+    currentDataset = e.target.value;
+  });
+
+  document.getElementById("queryInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") runSearch();
+  });
+
+  function setStatus(msg, loading = false) {
+    const el = document.getElementById("statusBar");
+    el.className = "status" + (loading ? " loading" : "");
+    el.textContent = msg;
+  }
+
+  async function runSearch() {
+    const query  = document.getElementById("queryInput").value.trim();
+    const boost  = document.getElementById("boostToggle").checked;
+    const limit  = Math.min(50, Math.max(1, parseInt(document.getElementById("limitInput").value) || 10));
+    const dataset = document.getElementById("datasetSelect").value;
+
+    if (!query) { setStatus("Please enter a search query."); return; }
+
+    document.getElementById("searchBtn").disabled = true;
+    setStatus(`Searching "${query}"…`, true);
+    document.getElementById("results").innerHTML = "";
+
+    const params = new URLSearchParams({ q: query, boost: boost ? "true" : "false", limit });
+    const url = `/${dataset}?${params}`;
+
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      renderResults(data.result || [], dataset, query, boost, limit);
+    } catch (err) {
+      document.getElementById("results").innerHTML =
+        `<div class="error-msg">Error: ${err.message}. Is the server running?</div>`;
+      setStatus("Search failed.");
+    } finally {
+      document.getElementById("searchBtn").disabled = false;
+    }
+  }
+
+  function renderResults(results, dataset, query, boost, limit) {
+    const container = document.getElementById("results");
+
+    if (!results.length) {
+      setStatus("No results found.");
+      return;
+    }
+
+    setStatus(`<span class="dot">◆</span> ${results.length} result${results.length !== 1 ? "s" : ""} · dataset: ${dataset} · boost: ${boost ? "on" : "off"}`);
+
+    container.innerHTML = results.map((r, i) => `
+      <div class="result-card" style="animation-delay:${i * 0.04}s">
+        <span class="result-rank">#${i + 1}</span>
+
+        <div>
+          <div class="result-title">${escHtml(r.title)}</div>
+          <div class="result-url">
+            <a href="${escHtml(r.url)}" target="_blank" rel="noopener">${escHtml(r.url)}</a>
+          </div>
+          <div class="result-meta">
+            <div class="meta-chip">
+              <span class="chip-label">score</span>
+              <span class="chip-val amber">${r.score.toFixed(6)}</span>
+            </div>
+            <div class="meta-chip">
+              <span class="chip-label">pagerank</span>
+              <span class="chip-val green">${r.pr != null ? r.pr.toFixed(8) : "n/a"}</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="detail-btn" onclick="openDetail('${escHtml(dataset)}', '${encodeURIComponent(r.url)}')">
+          Details →
+        </button>
+      </div>
+    `).join("");
+  }
+
+  // ── Page detail modal
+
+  async function openDetail(dataset, encodedUrl) {
+    document.getElementById("modalBackdrop").classList.add("open");
+    document.getElementById("modalBody").innerHTML = `<p style="color:var(--muted);font-size:12px">Loading page data…</p>`;
+
+    try {
+      const res = await fetch(`/${dataset}/pagedata?url=${encodedUrl}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      renderModal(d);
+    } catch (err) {
+      document.getElementById("modalBody").innerHTML =
+        `<div class="error-msg">Failed to load page details: ${err.message}</div>`;
+    }
+  }
+
+  function renderModal(d) {
+    const inCount  = (d.incomingLinks || []).length;
+    const outCount = (d.outgoingLinks || []).length;
+    const prFmt    = d.pageRank != null ? d.pageRank.toFixed(8) : "N/A";
+
+    const inLinks = d.incomingLinks && d.incomingLinks.length
+      ? d.incomingLinks.map(l => `<a href="${escHtml(l)}" target="_blank">${escHtml(l)}</a>`).join("")
+      : `<p class="empty-state">No incoming links found.</p>`;
+
+    const outLinks = d.outgoingLinks && d.outgoingLinks.length
+      ? d.outgoingLinks.map(l => `<a href="${escHtml(l)}" target="_blank">${escHtml(l)}</a>`).join("")
+      : `<p class="empty-state">No outgoing links found.</p>`;
+
+    const wordChips = d.wordFrequency && d.wordFrequency.length
+      ? d.wordFrequency.map(w =>
+          `<div class="word-chip"><span class="w">${escHtml(w.word)}</span><span class="c">${w.count}</span></div>`
+        ).join("")
+      : `<p class="empty-state">No word data available.</p>`;
+
+    document.getElementById("modalBody").innerHTML = `
+      <div class="modal-title">${escHtml(d.title)}</div>
+      <div class="modal-url"><a href="${escHtml(d.url)}" target="_blank" rel="noopener">${escHtml(d.url)}</a></div>
+
+      <div class="modal-stats">
+        <div class="stat-box">
+          <div class="sb-val">${prFmt}</div>
+          <div class="sb-label">PageRank</div>
+        </div>
+        <div class="stat-box">
+          <div class="sb-val">${inCount}</div>
+          <div class="sb-label">Incoming Links</div>
+        </div>
+        <div class="stat-box">
+          <div class="sb-val">${outCount}</div>
+          <div class="sb-label">Outgoing Links</div>
+        </div>
+        <div class="stat-box">
+          <div class="sb-val">${d.crawledAt ? new Date(d.crawledAt).toLocaleDateString() : "—"}</div>
+          <div class="sb-label">Crawled</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Incoming Links (${inCount})</div>
+        <div class="link-list">${inLinks}</div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Outgoing Links (${outCount})</div>
+        <div class="link-list">${outLinks}</div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Top 50 Word Frequencies</div>
+        <div class="word-grid">${wordChips}</div>
+      </div>
+    `;
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById("modalBackdrop")) closeDetailModal();
+  }
+  function closeDetailModal() {
+    document.getElementById("modalBackdrop").classList.remove("open");
+  }
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeDetailModal();
+  });
+
+  function escHtml(s) {
+    if (!s) return "";
+    return String(s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+</script>
+</body>
+</html>
