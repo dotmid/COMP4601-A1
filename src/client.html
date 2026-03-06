@@ -1,4 +1,4 @@
-*****Edited html from another class, but its probably too much for A1, just need to test ****
+ <!-- *****Edited html from another class, but its probably too much for A1, just need to test ***** -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -400,6 +400,7 @@
       gap: 4px;
       max-height: 180px;
       overflow-y: auto;
+      flex-shrink: 0;
     }
     .link-list a {
       font-size: 11px;
@@ -409,6 +410,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       transition: color 0.1s;
+      flex-shrink: 0;
     }
     .link-list a:hover { color: var(--text); }
 
@@ -557,7 +559,7 @@
   function setStatus(msg, loading = false) {
     const el = document.getElementById("statusBar");
     el.className = "status" + (loading ? " loading" : "");
-    el.textContent = msg;
+    el.innerHTML = msg;
   }
 
   async function runSearch() {

@@ -49,29 +49,15 @@ app.get("/pageranks", async (req, res) => {
   return res.type("text/plain").send(String(rank));
 });
 
-// Search: /fruitsA 
-// GET /fruitsA?q=<query>[&boost=true][&limit=N]
-app.get("/fruitsA", async (req, res) => {
+// Search: datasetName
+// GET /:datasetName?q=<query>[&boost=true][&limit=N]
+app.get("/:datasetName", async (req, res) => {
+  const { datasetName } = req.params;
   const { query, boost, limit } = parseSearchParams(req);
   if (!query) return res.status(400).json({ error: "Query parameter 'q' is required" });
 
   try {
-    const results = await searchDataset("fruitsA", query, boost, limit);
-    return res.json({ result: results });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Search failed" });
-  }
-});
-
-// Search: /personal (pygame.org/docs)
-// GET /personal?q=<query>[&boost=true][&limit=N]
-app.get("/personal", async (req, res) => {
-  const { query, boost, limit } = parseSearchParams(req);
-  if (!query) return res.status(400).json({ error: "Query parameter 'q' is required" });
-
-  try {
-    const results = await searchDataset("personal", query, boost, limit);
+    const results = await searchDataset(datasetName, query, boost, limit);
     return res.json({ result: results });
   } catch (err) {
     console.error(err);
